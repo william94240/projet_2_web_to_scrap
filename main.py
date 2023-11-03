@@ -10,6 +10,24 @@ import csv
 
 
 
+#Parcourir toutes les catégories du site web
+# def parcourir_toutes_les_categories():
+#     url = "http://books.toscrape.com/index.html" # TO DO adresse à saisir
+#     response = requests.get(url)
+#     html = response.content
+#     soup = BeautifulSoup(html, "html.parser")
+        
+#     liste_categories = soup.find("ul", class_="nav nav-list").find("ul").find_all("li")
+#     urls_categories = []
+#     for categorie in liste_categories:
+#         url_categorie = categorie.a.attrs["href"]
+#         urls_categories.append(url_categorie)
+#     print(urls_categories)    
+#     return urls_categories
+
+
+
+
 #Parcourir toutes les pages du site web
 def parcourir_toutes_les_pages():
     pages_urls = []
