@@ -1,89 +1,104 @@
 # PROJET BOOK TO SCRAPE (WEB SCRAPER)
 # D'abord créer un environement virtuel  avec: python -m venv btscrap
-# initialiser un repertory local git
+# initialiser un repertory local git avec: git init
 # Creer le fichier requirements: pip freeze >requirements.txt
 
 # Avec PIP installer les packages requis
 import requests
 from bs4 import BeautifulSoup
-import pandas
 import csv
 
 
 
-#Consulter toutes les pages du site web
-# def parcourir_toutes_les_pages():
-#     numero_page = 1
-#     urls = []
-    
-#     for i in range(50):
-#         page = f"https://books.toscrape.com/catalogue/page-{numero_page}.html"
-#         numero_page += 1
-#         urls.append(page)
-    
-#     return urls
+#Parcourir toutes les pages du site web
+def parcourir_toutes_les_pages():
+    pages_urls = []
+    for i in range(1, 51):# TO DO : a adapter au nombre de page
+        page_url = f"http://books.toscrape.com/catalogue/page-{i}.html"
+        pages_urls.append(page_url)
+         
+    return pages_urls
 
 
-#Récupérer les titres de chaque livre
-# def recuperer_titres_livres():
-#     url = "hts://books.toscrape.com/catalogue/page-1.html"
-#     response = requests.get(url)
-#     code_source_page = response.content
-#     soup = BeautifulSoup(code_source_page, "html.parser")
-#     livres = soup.find_all("article", class_="product_pod")
 
-#     titres = []
-#     for livre in livres:      
-#         #Obtenir Les titres. 
-#         image = livre.find("img", class_="thumbnail")
-#         titre = image.attrs["alt"]
-#         titres.append(titre)
-#         print(titres)
-#     return titres
+
+#Récupérer l'adresse de chaque livre (product_page_url)
+def recuperer_ladresse_dulivre(page_url):
+    response = requests.get(page_url)
+    code_source_delapage = response.content
+    soup = BeautifulSoup(code_source_delapage, "html.parser")
+    livres_surlapage = soup.find_all("article", class_="product_pod")
+ 
+
+    product_page_urls = []
+    for livre in livres_surlapage:      
+        #Obtenir Les titres. 
+        link = livre.find("a")["href"]
+        #Obtenir L'url de la page spécifique du livre.
+        product_page_url = "http://books.toscrape.com/catalogue/" + link
+        product_page_urls.append(product_page_url)
+   
+    return product_page_urls
+
+
+
 
         
-        
 
-# Otenir des infos sur chaque article(livre)
-def infos_chaque_article():
-    page_livre = f"http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
-    response = requests.get(page_livre)
-    code_source_page_article = response.content
-    soup = BeautifulSoup(code_source_page_article, "html.parser")
+# Otenir des infos sur chaque livre
+def infos_chaque_livre(product_page_urls):
+    product_page_urls = "http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
+    response = requests.get(product_page_urls)
+    codesource_pagelivre =  response.content                                                                                                                       
+    soup = BeautifulSoup(codesource_pagelivre, "html.parser")
 
     # Le contenu de la page entière d'un seul article(livre)
-    page_contenu = soup.find("article", class_="product_page")
+    page_livrecontenu = soup.find("article", class_="product_page")
     
-    title = page_contenu.find("h1").string
-    etoiles = page_contenu.find("p", class_="star-rating Three").attrs["class"][1]
-    product_description_gdparent = page_contenu.find(id="product_description")
-    product_description = product_description_gdparent.find_next().find_next().text
+    title = page_livrecontenu.find("h1").string
+    etoiles = page_livrecontenu.find("p", class_="star-rating Three").attrs["class"][1]
+    product_description_titre = page_livrecontenu.find(id="product_description")
+    product_description = product_description_titre.find_next().find_next().text
+
+    barre_denavigation = soup.find("ul", class_="breadcrumb")
+    category =barre_denavigation.find_all("li")[2].find("a").text
+
+    image_url = soup.find("div", class_="item active").img["src"]
+    
        
     tableau = soup.find("table")
-    liste_des_lignes = tableau.find_all("tr")
-    for ligne in liste_des_lignes:
-        upc = liste_des_lignes[0].td.string
-        product_type = liste_des_lignes[1].td.string
-        price_excl_tax = liste_des_lignes[2].td.string
-        price_incl_tax = liste_des_lignes[3].td.string
-        tax = liste_des_lignes[4].td.string
-        availability = liste_des_lignes[5].td.string
-        number_of_reviews = liste_des_lignes[6].td.string
+    lignes_dutableau = tableau.find_all("tr")
+    for ligne in lignes_dutableau:
+        upc = lignes_dutableau[0].td.string
+        product_type = lignes_dutableau[1].td.string
+        price_excl_tax = lignes_dutableau[2].td.string
+        price_incl_tax = lignes_dutableau[3].td.string
+        tax = lignes_dutableau[4].td.string
+        availability = lignes_dutableau[5].td.string
+        number_of_reviews = lignes_dutableau[6].td.string
 
        
 
         
-        print(title, "\n", upc, "\n",  product_type, "\n", price_excl_tax, "\n", price_incl_tax, "\n", tax, "\n", availability, "\n", number_of_reviews)
         
+    print("upc: ", upc)    
+    print("title: ", title)    
+    print("price_excl_tax: ", price_excl_tax)    
+    print("price_incl_tax: ", price_incl_tax)    
+    print("availability: ", availability)    
+    print("product_description: ", product_description)    
+    print("category: ", category)    
+    print("number_of_reviews: ", number_of_reviews)    
+    print("image_url: ", image_url)    
+    
   
+    return upc, title, price_excl_tax, price_incl_tax, availability, product_description, category, number_of_reviews, image_url
 
-
-infos_chaque_article() 
       
+page_url = "http://books.toscrape.com/index.html"
 
-
-
-
+parcourir_toutes_les_pages()
+recuperer_ladresse_dulivre(page_url)
 
 
 
