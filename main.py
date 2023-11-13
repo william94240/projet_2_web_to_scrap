@@ -14,7 +14,7 @@ import os
 
 
 
-#Parcourir toutes les catégories du site web
+#Parcourir toutes les catégories du site web: Cette fonction est appelée par scrapper_book_to_scrap()
 def parcourir_toutes_les_categories():
     url = "http://books.toscrape.com/index.html" # TO DO: adresse à saisir
     response = requests.get(url)
@@ -33,13 +33,10 @@ def parcourir_toutes_les_categories():
         pagination = soup_categorie.find("li", class_="current")
         
         if pagination == None:
-            # nb_pages = 1
             liste_urls_categories.append(url_categorie)
         else:
-            nb_pages = int(pagination.text.lstrip().rstrip().split(" ")[-1])
-        
+            nb_pages = int(pagination.text.lstrip().rstrip().split(" ")[-1])        
             numero_page = 1
-
             while numero_page <= nb_pages:                        
                 liste_urls_categories.append(url_categorie.replace("index",f"page-{numero_page}"))
                 numero_page += 1            
@@ -52,7 +49,7 @@ def parcourir_toutes_les_categories():
 
 
 # Récupérer l'adresse de chaque livre :product_page_url
-def recuperer_ladresse_dechaque_livre():
+def scrapper_book_to_scrap():
     liste_urls_categories = parcourir_toutes_les_categories()
     liste_product_page_url =[]
   
@@ -78,7 +75,7 @@ def recuperer_ladresse_dechaque_livre():
 
 
 
-# Otenir des infos sur chaque livre
+# Otenir des infos sur chaque livre: Cette fonction est appelée par scrapper_book_to_scrap()
 def infos_livre(param):
     response = requests.get(param)
     html_pagelivre =  response.content                                                                                                                       
@@ -108,7 +105,7 @@ def infos_livre(param):
     ecrire_dans_csv(param_1=category , param_2=infos_livres)
 
     # SAUVEGARDER DES IMAGES
-    # sauvegarder_images(param_3=image_url, param_4 = category, param_5 = title)
+    sauvegarder_images(param_3=image_url, param_4 = category, param_5 = title)
 
 
 
@@ -116,12 +113,12 @@ def infos_livre(param):
 
 
 
-# Ecriture dans un fichier csv(cette fonction est appelée par "infos_livre)
+# Ecriture dans un fichier csv: cette fonction est appelée par "infos_livre
 def ecrire_dans_csv(param_1, param_2):
     
     if not os.path.exists("csv"):
         os.makedirs("csv")
-    # os.chdir("csv")    
+      
     filename = os.path.join(os.getcwd(), f"./csv/{param_1}.csv")
     label_colonnes =["UPC", "TITRE", "PRICE_EXCL_TAX", "PRICE_INCL_TAX", "AVAILABILITY", "CATEGORY", "NUMBER_OF_REVIEWS", "IMAGE_URL", "ETOILES", "PRODUCT_DESCRIPTION"]
     with open(filename, "a",newline="", encoding="utf8") as file:
@@ -134,25 +131,31 @@ def ecrire_dans_csv(param_1, param_2):
 
 
 
-# Recuperation des images.
-def sauvegarder_images(param_3, param_4,param_5):
-    response = requests.get(param_3)
-    image_dir = os.path.join(os.getcwd(), f"images/{param_4}")
-    # print(image_dir)
-       
-       
-    if not os.path.exists(image_dir):
-        os.makedirs(image_dir)    
+# Recuperation des images: cette fonction est appelée par "infos_livre
+def sauvegarder_images(param_3, param_4, param_5):
+    response = requests.get(param_3)    
+           
+    if not os.path.exists(f"./images/{param_4}"):
+        os.makedirs(f"./images/{param_4}")    
 
-    os.chdir(image_dir)
-         
-    with open(f"{param_5}.jpg", "wb") as f:         
-        f.write(response.content)
+    filename = os.path.join(os.getcwd(), f"./images/{param_4}/{param_5}.jpg")
+    try:    
+        with open(filename, "wb") as f:         
+            f.write(response.content)
+    except FileNotFoundError:
+        print("image introuvable.")
+    except PermissionError:
+        print("Permissions d'accès sur l'image refusée.")
+        pass
+    except IOError:
+        print("Erreur d'entrée/sortie sur l'image.")
+    finally:
+        pass
 
-# sauvegarder_images()
+
 
     
 
 
-recuperer_ladresse_dechaque_livre()
+scrapper_book_to_scrap()
 

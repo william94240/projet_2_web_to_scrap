@@ -1,4 +1,5 @@
 btscrap/*
-csv/
+csv/*
 *.csv
-image/*
+images/*
+*.jpg
