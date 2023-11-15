@@ -2,7 +2,7 @@
 # D'abord créer un environement virtuel  avec: python -m venv btscrap
 # initialiser un repertory local git avec: git init
 # Creer le fichier requirements: pip freeze >requirements.txt :Redirection sur requirements.txt
-# Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CSV et images,
+# Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CSV et images.
  
 
 # Avec PIP installer les packages requis
@@ -143,12 +143,12 @@ def sauvegarder_images(param_3, param_4, param_5):
         with open(filename, "wb") as f:         
             f.write(response.content)
     except FileNotFoundError:
-        print("image introuvable.")
+        print(f"image {param_5}.jpg est introuvable.")
     except PermissionError:
-        print("Permissions d'accès sur l'image refusée.")
+        print(f"Les permissions d'accès sur l'image {param_5}.jpg sont refusées.")
         pass
     except IOError:
-        print("Erreur d'entrée/sortie sur l'image.")
+        print(f"Erreur d'entrée/sortie sur l'image {param_5}.jpg.")
     finally:
         pass
 
