@@ -1,5 +1,3 @@
-btscrap/*
-csv/*
-*.csv
-images/*
-*.jpg
+env/
+csv/
+images/

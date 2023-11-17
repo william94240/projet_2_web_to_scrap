@@ -1,5 +1,5 @@
 # PROJET BOOK TO SCRAPE (WEB SCRAPER)
-# D'abord créer un environement virtuel  avec: python -m venv btscrap
+# D'abord créer un environement virtuel  avec: python -m venv env
 # initialiser un repertory local git avec: git init
 # Creer le fichier requirements: pip freeze >requirements.txt :Redirection sur requirements.txt
 # Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CSV et images.
