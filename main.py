@@ -1,11 +1,13 @@
-# PROJET BOOK TO SCRAPE (WEB SCRAPER)
-# D'abord créer un environement virtuel  avec: python -m venv env
-# initialiser un repertory local git avec: git init
-# Creer le fichier requirements: pip freeze >requirements.txt :Redirection sur requirements.txt
-# Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CSV et images.
- 
+''' 
+PROJET BOOK TO SCRAPE (WEB SCRAPER)
+D'abord créer un environement virtuel  avec: python -m venv env
+Initialiser un repertory local git avec: git init
+Créer le fichier requirements: pip freeze >requirements.txt avec redirection sur le fichier requirements.txt
+Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CSV et images.
+'''
 
-# Avec PIP installer les packages requis
+
+# Avec PIP installer les packages néccessaire
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -13,149 +15,165 @@ from urllib.parse import urljoin
 import os
 
 
-
-#Parcourir toutes les catégories du site web: Cette fonction est appelée par scrapper_book_to_scrap()
 def parcourir_toutes_les_categories():
-    url = "http://books.toscrape.com/index.html" # TO DO: adresse à saisir
+    # Parcours toutes les catégories du site web
+    # Cette fonction est appelée par la fonction "scrapper_book_to_scrap()"
+
+    url = "http://books.toscrape.com/index.html"  # TO DO: adresse à saisir.
     response = requests.get(url)
-    html = response.content
+    # Réponse de la requête html qui doit etre égale à 200 (reponse positive)
+    html = response.content  # Extraction du contenu de la page html.
+    # Création de l'objet soup qui permettra de parser le code html.
     soup = BeautifulSoup(html, "html.parser")
-        
+    # Trouve la liste de catégories.
     liste_categories = soup.find("ul", class_="nav nav-list").ul.find_all("li")
-    liste_urls_categories =[]
+    # Initialisation de la liste des urls de differentes catégories.
+    liste_urls_categories = []
     for categorie in liste_categories:
-        url_categorie_partie = categorie.a.attrs["href"]
-        url_categorie = os.path.join("http://books.toscrape.com/", url_categorie_partie)               
-        
+        # trouve une partie de l'adresse.
+        url_categorie_tronque = categorie.a.attrs["href"]
+        # Concatenation de 2 parties de l'adresse
+        url_categorie = os.path.join(
+            "http://books.toscrape.com/", url_categorie_tronque)
+
+        # Parser catégorie par catégorie
         response_categorie = requests.get(url_categorie)
         html_categorie = response_categorie.content
         soup_categorie = BeautifulSoup(html_categorie, "html.parser")
+
+        # Pour trouver ligne en bas de la page où est afficher la numérotaion de la page.
         pagination = soup_categorie.find("li", class_="current")
-        
+
         if pagination == None:
+            # s'il n'y rien ce qu'il n'y a qu'une page dans la catégorie.
             liste_urls_categories.append(url_categorie)
         else:
-            nb_pages = int(pagination.text.lstrip().rstrip().split(" ")[-1])        
+            # s'il n'y a plusieurs pages dans la catégorie.
+            nb_pages = int(pagination.text.lstrip().rstrip().split(" ")[-1])
             numero_page = 1
-            while numero_page <= nb_pages:                        
-                liste_urls_categories.append(url_categorie.replace("index",f"page-{numero_page}"))
-                numero_page += 1            
-                
-    
+            while numero_page <= nb_pages:
+                liste_urls_categories.append(
+                    url_categorie.replace("index", f"page-{numero_page}"))
+                numero_page += 1
 
-    return liste_urls_categories         
-      
+    return liste_urls_categories
 
 
-
-# Récupérer l'adresse de chaque livre :product_page_url
 def scrapper_book_to_scrap():
+    # Permet de récupérer l'adresse de chaque livre :product_page_url.
+    # SURTOUT, c'est la FONCTION PRINCIPALE qui permet de scrapper le site web.
+
+    # la liste des urls des catégories.
     liste_urls_categories = parcourir_toutes_les_categories()
-    liste_product_page_url =[]
-  
+    liste_urls_product_page = []  # La liste de urls des livres
+
     for url_categorie in liste_urls_categories:
+        # Parser chaque page de la catégorie
         response = requests.get(url_categorie)
         html_de_lapage = response.content
         soup = BeautifulSoup(html_de_lapage, "html.parser")
-        livres_sur_lapage = soup.find_all("article", class_="product_pod")
-        
-        for livre in livres_sur_lapage:      
-            # Obtenir Les titres. 
+        # Trouve tous livres sur la page.
+        liste_livres_par_page = soup.find_all("article", class_="product_pod")
+
+        for livre in liste_livres_par_page:
+            # Parcourir tous les livres pour obtenir leurs urls.
+            # Obtenir l'url relative de chaque livre de la page.
             link = livre.find("a").attrs["href"]
-            # Obtenir L'url de la page spécifique du livre.
-            product_page_url = urljoin(url_categorie, link )
-            liste_product_page_url.append(product_page_url)
+            # Obtenir L'url absolue du livre.
+            url_product_page = urljoin(url_categorie, link)
+            # la liste de tous urls des livres
+            liste_urls_product_page.append(url_product_page)
 
-            # Recuperer les infos sur tous les livres
-            infos_livre(param = product_page_url)
-
-   
-
+            # Appel de la fonction "infos_livre()" qui permet de récuperer les infos sur tous les livres
+            infos_livre(url_product_page=url_product_page)
 
 
+def infos_livre(url_product_page):
+    # Otenir des infos sur chaque livre
+    # Cette fonction est appelée par scrapper_book_to_scrap()
 
+    # Parser chaque livre.
+    response = requests.get(url_product_page)  # Requête html sur le livre.
+    html_product_page = response.content  # html de la requête
+    soup = BeautifulSoup(html_product_page, "html.parser")  # L'objet soup
 
-# Otenir des infos sur chaque livre: Cette fonction est appelée par scrapper_book_to_scrap()
-def infos_livre(param):
-    response = requests.get(param)
-    html_pagelivre =  response.content                                                                                                                       
-    soup = BeautifulSoup(html_pagelivre, "html.parser")
-
-    title = soup.h1.string
+    title = soup.h1.string   # Extraction du titre livre.
+    # Trouve le tableau d'informations du livre.
     tableau_infos_article = soup.table
-    liste_des_lignes = tableau_infos_article.find_all("tr")     
-    upc = liste_des_lignes[0].td.string
-    product_type = liste_des_lignes[1].td.string
-    price_excl_tax = liste_des_lignes[2].td.string
-    price_incl_tax = liste_des_lignes[3].td.string
-    tax = liste_des_lignes[4].td.string
-    availability = liste_des_lignes[5].td.string
-    number_of_reviews = liste_des_lignes[6].td.string
-    product_description = soup.h2.find_next("p").text    
+    # Extraction de chaque ligne du tableau d'infos.
+    infos = tableau_infos_article.find_all("tr")
+    upc = infos[0].td.string  # info upc
+    product_type = infos[1].td.string  # info product_type
+    price_excl_tax = infos[2].td.string  # info price_excl_tax
+    price_incl_tax = infos[3].td.string  # info price_incl_tax
+    tax = infos[4].td.string  # info tax
+    availability = infos[5].td.string  # info availability
+    number_of_reviews = infos[6].td.string  # info number_of_reviews
+    # Affiche la description du livre.
+    product_description = soup.h2.find_next("p").text
+
+    # Isoler la barre de navigation en dessus horizontale
+    # et trouve le nom de la catégorie.
     barre_denavigation = soup.find("ul", class_="breadcrumb")
     category = barre_denavigation.find_all("li")[-2].a.text
-    image_url_relative = soup.img.attrs["src"]
-    image_url = urljoin(param,image_url_relative )   
-    etoiles = soup.find("p", class_="star-rating").attrs["class"][1]   
-       
-    infos_livres =[upc, title, price_excl_tax, price_incl_tax, availability, category, number_of_reviews, image_url, etoiles, product_description]
-    
 
-    # ECRIRE DANS DES FICHIERS CSV
-    ecrire_dans_csv(param_1=category , param_2=infos_livres)
+    # Trouve le url de l'image
+    url_image_relative = soup.img.attrs["src"]
+    url_image = urljoin(url_product_page, url_image_relative)
 
-    # SAUVEGARDER DES IMAGES
-    sauvegarder_images(param_3=image_url, param_4 = category, param_5 = title)
+    # Extraction du nombre d'étoiles.
+    etoiles = soup.find("p", class_="star-rating").attrs["class"][1]
+
+    # Extraction du nom qui sera attribué à l'image du livre lors du stockage des images.
+    nom_image = url_product_page.split("/")[-2]
+
+    # liste des éléments non demandé à titre d'infos
+    infos_livres = [upc, title, price_excl_tax, price_incl_tax, availability, category,
+                    number_of_reviews, url_image, etoiles, product_description]
+
+    # APPEL DE LA FONCTION "ECRIRE DANS DES FICHIERS CSV"
+    ecrire_dans_csv(category=category, infos_livres=infos_livres)
+
+    # APPEL DE LA FONCTION "SAUVEGARDER DES IMAGES"
+    sauvegarder_images(url_image=url_image,
+                       category=category, nom_image=nom_image)
 
 
-
-
-
-
-
-# Ecriture dans un fichier csv: cette fonction est appelée par "infos_livre
-def ecrire_dans_csv(param_1, param_2):
-    
+def ecrire_dans_csv(category, infos_livres):
+    # Ecriture dans un fichier csv
+    # cette fonction est appelée par la fonction "infos_livre"
     if not os.path.exists("csv"):
-        os.makedirs("csv")
-      
-    filename = os.path.join(os.getcwd(), f"./csv/{param_1}.csv")
-    label_colonnes =["UPC", "TITRE", "PRICE_EXCL_TAX", "PRICE_INCL_TAX", "AVAILABILITY", "CATEGORY", "NUMBER_OF_REVIEWS", "IMAGE_URL", "ETOILES", "PRODUCT_DESCRIPTION"]
-    with open(filename, "a",newline="", encoding="utf8") as file:
-        writer = csv.writer(file, delimiter =",")
-        if not os.path.exists(filename):
+        os.makedirs("csv")  # si le dossier csv n'existe pas en créer.
+
+    filename = os.path.join(os.getcwd(), f"csv\{category}.csv")  # Fichier csv
+    label_colonnes = ["UPC", "TITRE", "PRICE_EXCL_TAX", "PRICE_INCL_TAX", "AVAILABILITY",
+                      "CATEGORY", "NUMBER_OF_REVIEWS", "IMAGE_URL", "ETOILES", "PRODUCT_DESCRIPTION"]
+    if not os.path.exists(filename):
+        with open(filename, "w", newline="", encoding="utf8") as file:
+            writer = csv.writer(file, delimiter=",")
+            # Ecririture de l'en-tête de chaque fichier csv.
             writer.writerow(label_colonnes)
-        else:
-            writer.writerow(param_2)
+    else:
+        with open(filename, "a", newline="", encoding="utf8") as file:
+            writer = csv.writer(file, delimiter=",")
+            # Inscription des références de chaque livre dans le fichier csv.
+            writer.writerow(infos_livres)
 
 
+def sauvegarder_images(url_image, category, nom_image):
+    # Téléchargement et sauvegarde des images.
+    # Cette fonction est appelée par "infos_livre".
+    response = requests.get(url_image)
 
+    # créer le dossier s'il est inexistant.
+    if not os.path.exists(f"images\{category}"):
+        os.makedirs(f"images\{category}")
 
-# Recuperation des images: cette fonction est appelée par "infos_livre
-def sauvegarder_images(param_3, param_4, param_5):
-    response = requests.get(param_3)    
-           
-    if not os.path.exists(f"./images/{param_4}"):
-        os.makedirs(f"./images/{param_4}")    
-
-    filename = os.path.join(os.getcwd(), f"./images/{param_4}/{param_5}.jpg")
-    try:    
-        with open(filename, "wb") as f:         
-            f.write(response.content)
-    except FileNotFoundError:
-        print(f"image {param_5}.jpg est introuvable.")
-    except PermissionError:
-        print(f"Les permissions d'accès sur l'image {param_5}.jpg sont refusées.")
-        pass
-    except IOError:
-        print(f"Erreur d'entrée/sortie sur l'image {param_5}.jpg.")
-    finally:
-        pass
-
-
-
-    
+    filename = os.path.join(
+        os.getcwd(), f"images\{category}\{nom_image}.jpg")  # Fichier image
+    with open(filename, "wb") as f:
+        # Ecriture de l'image dans un fichier binaire.
+        f.write(response.content)
 
 
 scrapper_book_to_scrap()
-
