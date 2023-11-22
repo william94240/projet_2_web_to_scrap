@@ -1,5 +1,5 @@
 ''' 
-PROJET BOOK TO SCRAPE (WEB SCRAPER)
+PROJET BOOK TO SCRAPE (WEB SCRAPPER)
 D'abord créer un environement virtuel  avec: python -m venv env
 Initialiser un repertory local git avec: git init
 Créer le fichier requirements: pip freeze >requirements.txt avec redirection sur le fichier requirements.txt
@@ -7,7 +7,7 @@ Dans .gitignore exclure: les fichiers de l'environement virtuel, les fichiers CS
 '''
 
 
-# Avec PIP installer les packages néccessaire
+# Avec PIP installer les packages néccessaires
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -21,7 +21,7 @@ def parcourir_toutes_les_categories():
 
     url = "http://books.toscrape.com/index.html"  # TO DO: adresse à saisir.
     response = requests.get(url)
-    # Réponse de la requête html qui doit etre égale à 200 (reponse positive)
+    # Réponse de la requête html qui doit etre égale à 200 (if response.status_code == 200:)
     html = response.content  # Extraction du contenu de la page html.
     # Création de l'objet soup qui permettra de parser le code html.
     soup = BeautifulSoup(html, "html.parser")
@@ -153,6 +153,7 @@ def ecrire_dans_csv(category, infos_livres):
             writer = csv.writer(file, delimiter=",")
             # Ecririture de l'en-tête de chaque fichier csv.
             writer.writerow(label_colonnes)
+            writer.writerow(infos_livres)
     else:
         with open(filename, "a", newline="", encoding="utf8") as file:
             writer = csv.writer(file, delimiter=",")
