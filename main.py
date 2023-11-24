@@ -21,41 +21,47 @@ def parcourir_toutes_les_categories():
 
     url = "http://books.toscrape.com/index.html"  # TO DO: adresse à saisir.
     response = requests.get(url)
-    # Réponse de la requête html qui doit etre égale à 200 (if response.status_code == 200:)
-    html = response.content  # Extraction du contenu de la page html.
-    # Création de l'objet soup qui permettra de parser le code html.
-    soup = BeautifulSoup(html, "html.parser")
-    # Trouve la liste de catégories.
-    liste_categories = soup.find("ul", class_="nav nav-list").ul.find_all("li")
-    # Initialisation de la liste des urls de differentes catégories.
-    liste_urls_categories = []
-    for categorie in liste_categories:
-        # trouve une partie de l'adresse.
-        url_categorie_tronque = categorie.a.attrs["href"]
-        # Concatenation de 2 parties de l'adresse
-        url_categorie = os.path.join(
-            "http://books.toscrape.com/", url_categorie_tronque)
 
-        # Parser catégorie par catégorie
-        response_categorie = requests.get(url_categorie)
-        html_categorie = response_categorie.content
-        soup_categorie = BeautifulSoup(html_categorie, "html.parser")
+    # Réponse de la requête html qui doit etre égale à 200
+    if response.status_code == 200:
+        html = response.content  # Extraction du contenu de la page html.
+        # Création de l'objet soup qui permettra de parser le code html.
+        soup = BeautifulSoup(html, "html.parser")
+        # Trouve la liste de catégories.
+        liste_categories = soup.find(
+            "ul", class_="nav nav-list").ul.find_all("li")
+        # Initialisation de la liste des urls de differentes catégories.
+        liste_urls_categories = []
+        for categorie in liste_categories:
+            # trouve une partie de l'adresse.
+            url_categorie_tronque = categorie.a.attrs["href"]
+            # Concatenation de 2 parties de l'adresse
+            url_categorie = os.path.join(
+                "http://books.toscrape.com/", url_categorie_tronque)
 
-        # Pour trouver ligne en bas de la page où est afficher la numérotaion de la page.
-        pagination = soup_categorie.find("li", class_="current")
+            # Parser catégorie par catégorie
+            response_categorie = requests.get(url_categorie)
+            html_categorie = response_categorie.content
+            soup_categorie = BeautifulSoup(html_categorie, "html.parser")
 
-        if pagination == None:
-            # s'il n'y rien ce qu'il n'y a qu'une page dans la catégorie.
-            liste_urls_categories.append(url_categorie)
-        else:
-            # s'il n'y a plusieurs pages dans la catégorie.
-            nb_pages = int(pagination.text.lstrip().rstrip().split(" ")[-1])
-            numero_page = 1
-            while numero_page <= nb_pages:
-                liste_urls_categories.append(
-                    url_categorie.replace("index", f"page-{numero_page}"))
-                numero_page += 1
+            # Pour trouver ligne en bas de la page où est afficher la numérotaion de la page.
+            pagination = soup_categorie.find("li", class_="current")
 
+            if pagination == None:
+                # s'il n'y rien ce qu'il n'y a qu'une page dans la catégorie.
+                liste_urls_categories.append(url_categorie)
+            else:
+                # s'il n'y a plusieurs pages dans la catégorie.
+                nb_pages = int(
+                    pagination.text.lstrip().rstrip().split(" ")[-1])
+                numero_page = 1
+                while numero_page <= nb_pages:
+                    liste_urls_categories.append(
+                        url_categorie.replace("index", f"page-{numero_page}"))
+                    numero_page += 1
+
+    else:
+        print(f"Echec du scrapping, Status code: {response.status_code}")
     return liste_urls_categories
 
 
