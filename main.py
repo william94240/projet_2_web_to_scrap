@@ -1,4 +1,4 @@
-# PROJET BOOK TO SCRAPE (WEB SCRAPPER)
+# PROJET BOOKS TO SCRAPE (WEB SCRAPPER)
 # D'abord créer un environement virtuel  avec: python -m venv env
 # Initialiser un repertory local git avec: git init
 # Créer le fichier requirements: pip freeze >requirements.txt avec redirection sur le fichier requirements.txt
@@ -15,7 +15,7 @@ import os
 
 def parcourir_toutes_les_categories():
     # Parcours toutes les catégories du site web
-    # Cette fonction est appelée par la fonction "scrapper_book_to_scrap()"
+    # Cette fonction est appelée par la fonction "scraper_books_to_scrape()"
 
     url = "http://books.toscrape.com/index.html"  # TO DO: adresse à saisir.
     response = requests.get(url)
@@ -32,10 +32,10 @@ def parcourir_toutes_les_categories():
         liste_urls_categories = []
         for categorie in liste_categories:
             # trouve une partie de l'adresse.
-            url_categorie_tronque = categorie.a.attrs["href"]
-            # Concatenation de 2 parties de l'adresse
+            url_categorie_relative = categorie.a.attrs["href"]
+            # création de l'url absolue à partir de l'url relative,par Concaténation du chemin courant et du chemin relatif.
             url_categorie = os.path.join(
-                "http://books.toscrape.com/", url_categorie_tronque)
+                "http://books.toscrape.com/", url_categorie_relative)
 
             # Parser catégorie par catégorie
             response_categorie = requests.get(url_categorie)
@@ -46,7 +46,7 @@ def parcourir_toutes_les_categories():
             pagination = soup_categorie.find("li", class_="current")
 
             if pagination == None:
-                # s'il n'y rien ce qu'il n'y a qu'une page dans la catégorie.
+                # s'il y a qu'une page dans la catégorie.
                 liste_urls_categories.append(url_categorie)
             else:
                 # s'il n'y a plusieurs pages dans la catégorie.
@@ -63,37 +63,9 @@ def parcourir_toutes_les_categories():
     return liste_urls_categories
 
 
-def scrapper_book_to_scrap():
-    # Permet de récupérer l'adresse de chaque livre.
-    # SURTOUT, c'est la FONCTION PRINCIPALE qui permet de scrapper le site web.
-
-    # la liste des urls des catégories.
-    liste_urls_categories = parcourir_toutes_les_categories()
-    liste_urls_product_page = []  # La liste de urls des livres
-
-    for url_categorie in liste_urls_categories:
-        # Parser chaque page de la catégorie
-        response = requests.get(url_categorie)
-        html_de_lapage = response.content
-        soup = BeautifulSoup(html_de_lapage, "html.parser")
-        # Trouve tous livres sur la page.
-        liste_livres_par_page = soup.find_all("article", class_="product_pod")
-
-        for livre in liste_livres_par_page:
-            # Parcourir tous les livres pour obtenir leurs urls relatives.
-            link = livre.find("a").attrs["href"]
-            # Obtenir L'url absolue du livre.
-            url_product_page = urljoin(url_categorie, link)
-            # la liste de tous urls des livres
-            liste_urls_product_page.append(url_product_page)
-
-            # Appel de la fonction "infos_livre()" qui permet de récuperer les infos sur tous les livres
-            infos_livre(url_product_page=url_product_page)
-
-
 def infos_livre(url_product_page):
     # Otenir des infos sur chaque livre
-    # Cette fonction est appelée par scrapper_book_to_scrap()
+    # Cette fonction est appelée par la fonction "scraper_books_to_scrape()""
 
     # Parser chaque livre.
     response = requests.get(url_product_page)
@@ -168,7 +140,7 @@ def ecrire_dans_csv(category, infos_livres):
 
 def sauvegarder_images(url_image, category, nom_image):
     # Téléchargement et sauvegarde des images.
-    # Cette fonction est appelée par "infos_livre".
+    # Cette fonction est appelée par la fonction "infos_livre".
     response = requests.get(url_image)
 
     # créer le dossier s'il est inexistant.
@@ -182,4 +154,32 @@ def sauvegarder_images(url_image, category, nom_image):
         f.write(response.content)
 
 
-scrapper_book_to_scrap()
+def scraper_books_to_scrape():
+    # Permet de récupérer l'adresse de chaque livre.
+    # SURTOUT, c'est la FONCTION PRINCIPALE qui permet de scraper le site web.
+
+    # la liste des urls des catégories.
+    liste_urls_categories = parcourir_toutes_les_categories()
+    liste_urls_product_page = []  # La liste de urls des livres
+
+    for url_categorie in liste_urls_categories:
+        # Parser chaque page de la catégorie
+        response = requests.get(url_categorie)
+        html_de_lapage = response.content
+        soup = BeautifulSoup(html_de_lapage, "html.parser")
+        # Trouve tous livres sur la page.
+        liste_livres_par_page = soup.find_all("article", class_="product_pod")
+
+        for livre in liste_livres_par_page:
+            # Parcourir tous les livres pour obtenir leurs urls relatives.
+            link = livre.find("a").attrs["href"]
+            # Obtenir L'url absolue du livre.
+            url_product_page = urljoin(url_categorie, link)
+            # la liste de tous urls des livres
+            liste_urls_product_page.append(url_product_page)
+
+            # Appel de la fonction "infos_livre()" qui permet de récuperer les infos sur tous les livres
+            infos_livre(url_product_page=url_product_page)
+
+
+scraper_books_to_scrape()
